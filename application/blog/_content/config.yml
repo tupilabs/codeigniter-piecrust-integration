@@ -1,0 +1,26 @@
+site:
+    title: Your New PieCrust Website
+    description: A sample website running with PieCrust
+    author: Anonymous
+    pretty_urls: false
+    
+smartypants:
+    enable: true
+
+server:
+    config_variants:
+        default:
+            site:
+                base_url: http://localhost/codeigniter-piecrust-integration/
+
+baker:
+    skip_patterns:
+        - /^index.php/
+    config_variants:
+        default:
+            site:
+                base_url: http://localhost/codeigniter-piecrust-integration/
+        production:
+            site:
+                base_url: http://www.mywebsite.com/
+

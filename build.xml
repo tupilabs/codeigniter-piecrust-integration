@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="codeigniter-piecrust-integration" default="usage">
+
+	<description>codeigniter-piecrust-integration</description>
+
+	<target name="usage" depends="clean" description="Prints build usage">
+        <echo message="clean: removes dist directory and its contents" />
+        <echo message="blog: creates static html blog" />
+        <echo message="blog-dist: creates static html blog for production environment" />
+        <echo message="blog-run: runs the blog with piecrust built-in web server" />
+        <echo message="dist: prepares dist directory with a production ready web site" />
+        <echo message="deploy: deploys the site to production" />
+        <echo message="usage: prints this help menu" />
+    </target>
+	
+	<target name="clean" description="Cleans dist directory">
+        <echo message="Cleaninig dist directory..." />
+        <delete dir="${basedir}/dist" failonerror="false" />
+        <echo message="Cleaninig blog directory..." />
+        <delete dir="${basedir}/blog" failonerror="false" />
+    </target>
+	
+	<target name="blog" depends="clean" description="Create static blog">
+        <exec append="true" executable="${basedir}/tools/piecrust/bin/chef">
+            <arg value="--root=${basedir}/application/blog" />
+            <arg value="bake" />
+            <arg value="--output=${basedir}/blog" />
+            <arg value="--portable" />
+            <arg value="--force" />
+        </exec>
+    </target>
+	
+    <target name="blog-dist" depends="clean" description="Create static blog for distribution">
+        <exec append="true" executable="${basedir}/tools/piecrust/bin/chef">
+            <arg value="--root=${basedir}/application/blog" />
+            <arg value="bake" />
+            <arg value="--output=${basedir}/blog" />
+            <arg value="--portable" />
+            <arg value="--force" />
+            <arg value="--config=production" />
+        </exec>
+    </target>
+	
+    <target name="blog-run" description="Runs static blog and watch for modifications">
+        <exec append="true" executable="${basedir}/tools/piecrust/bin/chef">
+            <arg value="--root=${basedir}/application/blog" />
+            <arg value="serve" />
+        </exec>
+    </target>
+	
+    <target name="dist" depends="clean, blog-dist" description="Creates production ready site">
+        <mkdir dir="${basedir}/dist"/>
+        <copy todir="${basedir}/dist">
+           <fileset dir="${basedir}">
+              <include name="application/**" />
+              <include name="system/**" />
+              <include name="assets/**" />
+              <include name="blog/**" />
+           </fileset>
+           <fileset dir="${basedir}">
+              <include name="favicon.ico" />
+              <include name="sitemap.xml" />
+              <include name="google*.html" />
+           </fileset>
+        </copy>
+        <copy todir="${basedir}/dist" overwrite="true">
+           <!-- .htaccess and index.php -->
+           <fileset dir="${basedir}/build">
+              <include name="**/**" />
+           </fileset>
+        </copy>
+    </target>
+	
+    <target name="deploy" depends="dist" description="Deploys via SSH to the server">
+        <input message="Please enter SSH user:" addproperty="ssh.username" />
+        <input message="Please enter SSH host:" addproperty="ssh.host" />
+        <input message="Please enter SSH dir:" addproperty="ssh.dir" />
+            
+        <exec executable="rsync" dir="${basedir}/dist" failonerror="true">
+          <arg value="-r"/>
+          <arg value="."/>
+          <arg value="${ssh.username}@${ssh.host}:${ssh.dir}"/>
+          <arg value="--exclude-from=${basedir}/rsync.excludes"/>
+          <arg value="-v"/>
+        </exec>
+    </target>
+	
+</project>
